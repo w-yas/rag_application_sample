@@ -1,0 +1,26 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "==0.110.0"
+sqlalchemy = "==2.0.28"
+uvicorn = "==0.27.1"
+requests = "*"
+jwt = "*"
+dotenv = "*"
+openai = "*"
+azure-search-documents = "*"
+azure-identity = "*"
+
+[dev-packages]
+pre-commit = "*"
+black = "*"
+isort = "*"
+flake8 = "*"
+mypy = "*"
+
+[requires]
+python_version = "3.12"
+python_full_version = "3.12.11"
