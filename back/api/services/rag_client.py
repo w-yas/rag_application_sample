@@ -32,12 +32,12 @@ class RagClient:
         self.content_field = os.getenv("CONTENT_FIELD", "chunk")
         self.title_field = os.getenv("TITLE_FIELD", "title")
         try:
-            self.initialize_clients()
+            self._init_cients()
         except Exception:
             logger.error("RagClientの初期化に失敗しました。")
             raise
 
-    def initialize_clients(self) -> None:
+    def _init_cients(self) -> None:
         if not all(
             [
                 self.search_endpoint,
@@ -64,7 +64,7 @@ class RagClient:
             api_version=self.api_version,
         )
 
-    def search_documents(self, query: str, top_k: int = 3) -> list:
+    def find_documents(self, query: str, top_k: int = 3) -> list:
         try:
             # ベクトルクエリの設定
             vector_query = VectorizableTextQuery(
@@ -122,7 +122,7 @@ class RagClient:
             logger.error(f"検索エラーの詳細: {str(e)}")
             raise Exception(f"ドキュメント検索中にエラーが発生しました: {e}")
 
-    def generate_response(self, query: str, documents: list) -> str:
+    def create_response(self, query: str, documents: list) -> str:
         try:
             context = self._generate_context_from_documents(documents)
             system_message = """
@@ -156,8 +156,8 @@ class RagClient:
         return "\n---\n".join(context_parts)
 
     def get_response_with_rag(self, query: str) -> dict:
-        documents = self.search_documents(query, top_k=self.top_k)
-        response = self.generate_response(query, documents)
+        documents = self.find_documents(query, top_k=self.top_k)
+        response = self.create_response(query, documents)
         return {
             "query": query,
             "response": response,
