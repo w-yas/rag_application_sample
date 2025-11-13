@@ -1,7 +1,58 @@
 {
-  "files": [],
-  "references": [
-    { "path": "./tsconfig.app.json" },
-    { "path": "./tsconfig.node.json" }
-  ]
+  // TypeScript のコンパイラオプション
+  "compilerOptions": {
+    // ビルドターゲット：モダンブラウザ向け
+    "target": "ES2022",
+
+    // モジュール出力形式（Viteなどのバンドラ向けに ES モジュール）
+    "module": "ESNext",
+
+    // バンドラ向けのモジュール解決（Vite を使う場合に相性が良い）
+    "moduleResolution": "bundler",
+
+    // JSX トランスフォーム（React 17+ の自動変換）
+    "jsx": "react-jsx",
+
+    // 標準ライブラリ（DOM を含めることでブラウザ API を型検査可能にする）
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    // vite の import.meta.env 型などを有効にする
+    "types": ["vite/client"],
+
+    // ライブラリの型チェックをスキップして高速化（一般的な設定）
+    "skipLibCheck": true,
+
+    // Vite の設定ファイル（vite.config.ts）などで拡張子を含む import を許可
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+
+    // tsc 実行時は JS を emit しない（Vite にトランスパイルを任せる）
+    "noEmit": true,
+
+    // 型チェックを厳格にする
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+
+    // コード品質を高める追加チェック
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+
+    // クラスフィールドの ECMAScript 準拠の扱い
+    "useDefineForClassFields": true,
+
+    // ts の増分ビルド情報ファイルを指定（型チェックの高速化に寄与）
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.tsbuildinfo"
+  },
+
+  // 型チェック対象にするファイル・ディレクトリ
+  "include": [
+    "src", // アプリのソース（生成した型ファイルもここに置く想定）
+    "vite.config.ts" // Vite の設定ファイルを TypeScript で書いている場合に含める
+  ],
+
+  // 明示的に除外したいファイルがあればここへ（例: 出力ディレクトリ）
+  "exclude": ["dist", "node_modules"]
 }
