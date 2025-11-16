@@ -1,15 +1,23 @@
 import os
+
 from fastapi import APIRouter, Depends
-from back.api.schemas.chat_schema import RagChatResponse, RagChatRequest
-from back.api.auth.auth import get_token, TokenClaims
+from fastapi.responses import JSONResponse
+
+from back.api.auth.auth import TokenClaims, get_token
+from back.api.schemas.chat_schema import RagChatRequest, RagChatResponse
 from back.api.services.rag_client import RagClient
+
 
 router = APIRouter()
 
 
 @router.get("/")
 async def get_root():
-    return {"message": "API is running"}
+    return JSONResponse(
+        status_code=200,
+        content={"message": "API is running"},
+        headers={"X-Custom-Header": "value"},
+    )
 
 
 @router.post("/chat", response_model=RagChatResponse)

@@ -8,11 +8,12 @@ fastapi = "==0.110.0"
 sqlalchemy = "==2.0.28"
 uvicorn = "==0.27.1"
 requests = "*"
-jwt = "*"
+pyjwt = { version = ">=2.8.0", extras = ["crypto"] }
 dotenv = "*"
 openai = "*"
 azure-search-documents = "*"
 azure-identity = "*"
+colorlog = "*"
 
 [dev-packages]
 pre-commit = "*"

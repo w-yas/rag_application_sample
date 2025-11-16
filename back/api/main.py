@@ -2,15 +2,21 @@ import json
 from contextlib import asynccontextmanager
 from pathlib import Path
 import os
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from back.api.routes.route import router
 from fastapi.routing import APIRoute
-from sqlalchemy.orm import exc
 from back.api.middlewares.request_id_middleware import RequestIDMiddleware
 from back.api.utils.logging import logger
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException
+
+from back.api.utils.exception_handler import (
+    http_exception_handler,
+    validation_exception_handler,
+    generic_exception_handler,
+)
 
 
 @asynccontextmanager
@@ -21,9 +27,17 @@ async def lifespan(app: FastAPI):
             out_path.parent.mkdir(parents=True, exist_ok=True)
             with out_path.open("w") as f:
                 json.dump(app.openapi(), f, indent=2)
-                logger.info(f"OpenAPI スキーマの書き込みに成功しました {out_path}")
+                logger.info(
+                    "OpenAPI スキーマの書き込みに成功しました %s",
+                    out_path,
+                    extra={"request_id": ""},
+                )
         except Exception as e:
-            logger.error(f"OpenAPI スキーマの書き込み中にエラーが発生しました: {e}")
+            logger.error(
+                "OpenAPI スキーマの書き込み中にエラーが発生しました %s",
+                e,
+                extra={"request_id": ""},
+            )
         yield
 
 
@@ -34,9 +48,7 @@ def create_app() -> FastAPI:
 
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            o.strip() for o in os.getenv("CORS_ALLOW_ORIGINS", "").split(",") if o.strip()
-        ],
+        allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["POST"],
         allow_headers=["*"],
@@ -51,7 +63,6 @@ def create_app() -> FastAPI:
     )
 
     application.include_router(router)
-
     return application
 
 
@@ -63,4 +74,13 @@ def use_route_names_as_operation_ids(app: FastAPI) -> None:
 
 
 app = create_app()
+
+# 既定の HTTPException 処理のオーバーライド
+app.add_exception_handler(HTTPException, http_exception_handler)
+# リクエストバリデーションエラー(422) のハンドラ
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+# 未処理例外のハンドラ（Exception を捕ることで 500 を一元化）
+app.add_exception_handler(Exception, generic_exception_handler)
+
+
 use_route_names_as_operation_ids(app)
