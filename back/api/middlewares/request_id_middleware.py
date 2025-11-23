@@ -1,10 +1,12 @@
 import time
 import uuid
-from starlette.types import ASGIApp, Scope, Receive, Send, Message
-from back.api.utils.logging import logger
-from back.api.utils.add_request_id import set_request_id
-from fastapi.responses import JSONResponse
+
 from fastapi import status
+from fastapi.responses import JSONResponse
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
+
+from back.api.utils.add_request_id import set_request_id
+from back.api.utils.logging import logger
 
 
 # NOTE: contextvarが正しく機能するためにBaseHTTPMiddlewareではなくASGIミドルウェアを使用
@@ -23,7 +25,20 @@ class RequestIDMiddleware:
                 )
             return
 
-        request_id = str(uuid.uuid4())
+        # 受信ヘッダに x-request-id があれば使い、なければ新規生成
+        request_id = None
+        headers = scope.get("headers", [])
+        for name, value in headers:
+            if name.decode("latin1").lower() == "x-request-id":
+                try:
+                    request_id = value.decode("utf-8")
+                except Exception:
+                    request_id = value.decode("latin1")
+                break
+
+        if not request_id:
+            request_id = str(uuid.uuid4())
+
         set_request_id(request_id)
         start = time.time()
 

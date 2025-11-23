@@ -12,7 +12,7 @@ router = APIRouter()
 
 
 @router.get("/")
-async def get_root():
+async def get_root(token=Depends(get_token)):
     return JSONResponse(
         status_code=200,
         content={"message": "API is running"},

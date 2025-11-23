@@ -1,20 +1,21 @@
+import asyncio
 import os
 from time import time
+
 import httpx
-from fastapi.security import OAuth2PasswordBearer
-from pydantic import BaseModel
-from jwt import PyJWKClient
 import jwt
 from fastapi import Depends, HTTPException, status
-import asyncio
+from fastapi.security import OAuth2PasswordBearer
+from jwt import PyJWKClient
+from pydantic import BaseModel
+
+from back.api.utils.logging import logger
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-WELL_KNOWN = os.getenv(
-    "WELL_KNOWN_URL", "https://login.microsoftonline.com/common/.well-known/openid-configuration"
-)
 AUDIENCE = os.getenv("AUDIENCE")
 ISSUER = os.getenv("ISSUER")
+WELL_KNOWN = os.getenv("WELL_KNOWN")
 
 
 class TokenClaims(BaseModel):
@@ -22,7 +23,7 @@ class TokenClaims(BaseModel):
 
 
 class JwksProvider:
-    def __init__(self, well_known_url: str, ttl: int = 3600):
+    def __init__(self, well_known_url: str, ttl: int = 60):
         self.well_known_url = well_known_url
         self.ttl = ttl
         self.jwks_client: PyJWKClient | None = None
@@ -59,19 +60,28 @@ class JwksProvider:
     async def get_signing_key_with_retry(self, token: str):
         try:
             client = await self.get_client()
-            return client.get_signing_key_from_jwt(token)
-        except Exception:
-            # NOTE: ここでは「kid not found」「鍵一覧が古い」などを想定して再取得を試みる
+            clients = client.get_signing_key_from_jwt(token)
+            return clients
+        except Exception as e:
+            logger.error(f"First attempt failed. Exception: {type(e).__name__}: {e}")
             try:
+                # 鍵リストの更新を試みる
                 await self.refresh_client()
             except httpx.HTTPError:
+                logger.error("Http Error has Occuered")
                 raise
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(0.5)
             try:
+                # 新しいクライアントを取得
                 client = await self.get_client()
-                return client.get_signing_key_from_jwt(token)
-            except Exception:
-                raise
+                clients_retry = client.get_signing_key_from_jwt(token)
+                return clients_retry
+            except Exception as e_retry:
+                # 2回目の失敗も鍵が見つからない場合、サーバー側の問題として HTTPException を送出
+                logger.error(
+                    f"Second attempt failed. Exception: {type(e_retry).__name__}: {e_retry}"
+                )
+                raise  # get_token の例外処理でキャッチされる
 
 
 _jwks_provider = JwksProvider(WELL_KNOWN, ttl=3600)
@@ -98,6 +108,7 @@ async def get_token(id_token: str = Depends(oauth2_scheme)) -> TokenClaims:
             issuer=ISSUER,
             options=options,
         )
+        logger.info("Auth Token Verified")
         return TokenClaims(claims=claims)
 
     except jwt.ExpiredSignatureError:

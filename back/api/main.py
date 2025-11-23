@@ -1,22 +1,23 @@
 import json
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-import os
-from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from back.api.routes.route import router
-from fastapi.routing import APIRoute
-from back.api.middlewares.request_id_middleware import RequestIDMiddleware
-from back.api.utils.logging import logger
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException
 
+from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.routing import APIRoute
+from starlette.exceptions import HTTPException
+from starlette.middleware.cors import CORSMiddleware
+
+from back.api.middlewares.request_id_middleware import RequestIDMiddleware
+from back.api.routes.route import router
 from back.api.utils.exception_handler import (
+    generic_exception_handler,
     http_exception_handler,
     validation_exception_handler,
-    generic_exception_handler,
 )
+from back.api.utils.logging import logger
 
 
 @asynccontextmanager
@@ -50,7 +51,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=["*"],
         allow_credentials=True,
-        allow_methods=["POST"],
+        allow_methods=["POST", "GET"],
         allow_headers=["*"],
         expose_headers=["x-request-id"],
     )
