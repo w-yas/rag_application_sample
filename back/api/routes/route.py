@@ -3,7 +3,7 @@ import os
 from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 
-from back.api.auth.auth import TokenClaims, get_token
+from back.api.auth.auth import get_token
 from back.api.schemas.chat_schema import RagChatRequest, RagChatResponse
 from back.api.services.rag_client import RagClient
 
