@@ -1,25 +1,19 @@
+import { MsalProvider } from "@azure/msal-react";
 import React from "react";
-import { callGraphApi } from "./auth/callGraphApi";
-import { signIn } from "./auth/signIn";
-
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { msalInstance } from "./auth/msalInstance";
+import Home from "./pages/Home";
 const App: React.FC = () => {
-  const [profile, setProfile] = React.useState<any>(null);
-
-  const handleLogin = async () => {
-    await signIn();
-    const data = await callGraphApi();
-    setProfile(data);
-  };
   return (
     <div>
-      <h1>React MSAL Authentication Example</h1>
-      <button onClick={handleLogin}>Sign In and Fetch Profile</button>
-      {/* {profile && (
-        <div>
-          <h2>Profile Information:</h2>
-          <pre>{JSON.stringify(profile, null, 2)}</pre>
-        </div>
-      )} */}
+      <BrowserRouter>
+        <MsalProvider instance={msalInstance}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="*" element={<h1>404 Not Found</h1>} />
+          </Routes>
+        </MsalProvider>
+      </BrowserRouter>
     </div>
   );
 };

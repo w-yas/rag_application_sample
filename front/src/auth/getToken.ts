@@ -11,9 +11,9 @@ export async function getToken() {
       ...loginRequest,
       account: account,
     });
-    return response.accessToken;
+    return response;
   } catch (error) {
     const response = await msalInstance.acquireTokenPopup(loginRequest);
-    return response.accessToken;
+    return response;
   }
 }

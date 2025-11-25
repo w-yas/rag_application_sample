@@ -4,16 +4,15 @@ import { BrowserCacheLocation, LogLevel } from "@azure/msal-browser";
 export const msalConfig: Configuration = {
   auth: {
     clientId: import.meta.env.VITE_CLIENT_ID,
-    authority: `https://login.microsoftonline.com/${
-      import.meta.env.VITE_TENANT_ID
-    }`,
+    authority:
+      "https://login.microsoftonline.com/b12cac2b-c13a-4af7-b811-6b824dd91c45",
     knownAuthorities: [],
     redirectUri: import.meta.env.VITE_REDIRECT_URI,
     postLogoutRedirectUri: import.meta.env.VITE_POST_LOGOUT_REDIRECT_URI,
     navigateToLoginRequestUrl: false, // ログイン後に元のURLにリダイレクトするかどうか
   },
   cache: {
-    cacheLocation: BrowserCacheLocation.SessionStorage, // セッションストレージを使用
+    cacheLocation: BrowserCacheLocation.LocalStorage, // セッションストレージを使用
   },
   system: {
     loggerOptions: {
