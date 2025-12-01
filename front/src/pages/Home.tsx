@@ -1,61 +1,44 @@
-import React from "react";
-import type { components } from "../api/schema";
-import { callGraphApi } from "../auth/callGraphApi";
-import { signIn } from "../auth/signIn";
-import { client } from "../lib/apiClient";
-
-type RagChatRequest = components["schemas"]["RagChatRequest"];
-type RagChatResponse = components["schemas"]["RagChatResponse"];
+// Home.tsx
+import {
+  AuthenticatedTemplate,
+  UnauthenticatedTemplate,
+  useMsal,
+} from "@azure/msal-react";
+import type React from "react";
+import { Link } from "react-router-dom";
+import { loginRequest } from "../auth/msalConfig";
 
 const Home: React.FC = () => {
-  const [profile, setProfile] = React.useState<any>(null);
-  const [apiResult, setApiResult] = React.useState<any>(null);
-  const [searchResult, setSearchResult] = React.useState<any>(null);
-
-  const sample: RagChatRequest = {
-    query: "sample",
-    top_k: 3,
-    search_mode: "full",
-    model: "gpt-4o",
-  };
+  const { instance } = useMsal();
 
   const handleLogin = async () => {
-    await signIn();
-    const data = await callGraphApi();
-    setProfile(data);
+    try {
+      const loginResponse = await instance.loginPopup(loginRequest);
+
+      console.log("id_token acquired:", loginResponse);
+      const account = loginResponse.account;
+
+      if (account) {
+        instance.setActiveAccount(account);
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   };
-  const handleCallRoot = async () => {
-    const response = await client.GET("/");
-    setApiResult(response.data);
-  };
-  const handleSearch = async () => {
-    const response = await client.POST("/chat", {
-      body: {
-        query: "sample",
-        top_k: 3,
-        search_mode: "full",
-        model: "gpt-4o",
-      },
-    });
-    setSearchResult(response);
-  };
+
   return (
     <div>
-      <h1>React MSAL Authentication Example</h1>
-      <div>
-        <button onClick={handleLogin}>Sign In and Fetch Profile</button>
-      </div>
-      <div>
-        <button onClick={handleCallRoot}>Call API</button>
-      </div>
-      <div>
-        <button onClick={handleSearch}> Call Search with Auth</button>
-      </div>
-      <h2>Profile</h2>
-      <pre>{profile ? JSON.stringify(profile, null, 2) : "No profile"}</pre>
-
-      <h2>API Result (/)</h2>
-      <pre>{apiResult ? JSON.stringify(apiResult, null, 2) : "Noresult"}</pre>
+      <h1>RAG Chatアプリ</h1>
+      <AuthenticatedTemplate>
+        <p>ようこそ！認証が完了しました。</p>
+        <Link to="/chat">チャットを開始する</Link>
+      </AuthenticatedTemplate>
+      <UnauthenticatedTemplate>
+        <p>サインインしてチャットを始める必要があります。</p>
+        <button onClick={() => handleLogin()}>
+          Microsoft アカウントでサインイン
+        </button>
+      </UnauthenticatedTemplate>
     </div>
   );
 };

@@ -1,0 +1,164 @@
+/* ========================================================= */
+/* 1. グローバル & 基本レイアウト (ChatPage.tsx の .chat-container) */
+/* ========================================================= */
+
+/* 基本的なリセットとフォント設定 */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f4f4f4;
+}
+
+/* ページ全体のコンテナ: サイドバーとメインエリアを横並びにする */
+.chat-container {
+  display: flex;
+  height: 100vh; /* ビューポートの高さ全体を使う */
+}
+
+/* ========================================================= */
+/* 2. ChatSidebar のスタイル */
+/* ========================================================= */
+
+.chat-sidebar {
+  width: 250px;
+  background-color: #343a40; /* ダークグレー */
+  color: white;
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0; /* 幅が縮まないように固定 */
+  overflow-y: auto; /* スレッドが多い場合にスクロール可能にする */
+}
+
+.sidebar-title {
+  padding: 0 20px 15px;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #495057;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+/* 新規チャットボタン (Sidebar内) */
+.new-chat-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin: 0 20px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.new-chat-button:hover {
+  background-color: #0056b3;
+}
+
+/* スレッドリスト */
+.thread-list {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.thread-item {
+  padding: 10px 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: background-color 0.1s;
+}
+
+.thread-item:hover {
+  background-color: #495057;
+}
+
+.thread-item-active {
+  background-color: #007bff;
+  font-weight: bold;
+}
+
+/* ========================================================= */
+/* 3. ChatMain (メインチャットエリア) のスタイル */
+/* ========================================================= */
+
+.chat-area-wrapper {
+  flex-grow: 1; /* 残りのスペースをすべて占める */
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+}
+
+.chat-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  color: #333;
+}
+
+/* 会話メッセージエリア */
+.messages-area {
+  flex-grow: 1;
+  padding: 20px;
+  overflow-y: auto; /* メッセージが多い場合にスクロール可能にする */
+  background-color: #fbfbfb;
+}
+
+.empty-message {
+  text-align: center;
+  color: #999;
+  padding-top: 50px;
+}
+
+.message-bubble {
+  max-width: 50%;
+  padding: 10px 15px;
+  border-radius: 18px;
+  margin-bottom: 10px;
+  line-height: 1.4;
+  position: relative;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.message-text {
+  word-wrap: break-word;
+}
+
+.message-time {
+  display: block;
+  font-size: 0.7rem;
+  margin-top: 5px;
+  opacity: 0.7;
+}
+
+.message-user {
+  margin-left: auto;
+  background-color: #007bff;
+  color: white;
+  border-bottom-right-radius: 3px;
+}
+
+/* ボットメッセージ (左寄せ) */
+.message-bot {
+  margin-right: auto; /* 左寄せ */
+  background-color: #e2e6ea;
+  color: #333;
+  border-bottom-left-radius: 3px; /* 角を調整 */
+}
+
+/* ローディングメッセージ */
+.loading-message {
+  text-align: center;
+  padding: 10px;
+  color: #007bff;
+  font-style: italic;
+}
