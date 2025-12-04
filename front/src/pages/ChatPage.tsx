@@ -42,6 +42,16 @@ const ChatPage: React.FC = () => {
     scrollToBottom();
   }, [messages.length]);
 
+  useEffect(() => {
+    // 現在アクティブなスレッドを見つける
+    const activeThread = threads.find((thread) => thread.id == currentThreadId);
+    if (activeThread) {
+      setMessages(activeThread.messages);
+    } else {
+      setMessages([]);
+    }
+  }, [threads, currentThreadId]);
+
   const handleSelectedTopK = useCallback((topK: number) => {
     setTopK(topK);
   }, []);
@@ -63,6 +73,7 @@ const ChatPage: React.FC = () => {
     // 新しいスレッドをリストの先頭に追加し、それをアクティブにする
     setThreads((prev) => [newThread, ...prev]);
     setCurrentThreadId(newThread.id);
+    setUserInput("");
   }, []);
 
   const setMessagesInThread = (Message: ChatMessage) => {
@@ -80,19 +91,41 @@ const ChatPage: React.FC = () => {
     });
   };
 
+  const updateThreadTitle = (newTitle: string) => {
+    setThreads((prevThreads) => {
+      return prevThreads.map((thread) => {
+        if (thread.id == currentThreadId) {
+          const truncatedTitle =
+            newTitle.length > 30 ? newTitle.substring(0, 30) + "..." : newTitle;
+          return {
+            ...thread,
+            title: truncatedTitle,
+          };
+        }
+        return thread;
+      });
+    });
+  };
+
   const fetchRagResponse = useCallback(
     async (message: string) => {
       setIsSending(true);
 
+      const currentThread = threads.find((t) => t.id == currentThreadId);
+      const isFirstMessage =
+        currentThread && currentThread.messages.length === 0;
+
+      if (isFirstMessage) {
+        updateThreadTitle(message);
+      }
+
       const userMessage: ChatMessage = {
-        id: Date.now().toString + "-user",
+        id: Date.now().toString() + "-user",
         text: message,
         sender: "user",
         timestamp: new Date(),
       };
       setMessagesInThread(userMessage);
-      setMessages((prevMessages) => [...prevMessages, userMessage]);
-
       try {
         const requestBody: RagChatRequest = {
           query: message,
@@ -109,14 +142,12 @@ const ChatPage: React.FC = () => {
             `API call failed: ${JSON.stringify(error || "No data")}`
           );
         }
-
         const botMessages: ChatMessage = {
           id: Date.now().toString() + "-bot",
           text: data.response,
           sender: "bot",
           timestamp: new Date(),
         };
-        setMessages((prevMessages) => [...prevMessages, botMessages]);
         setMessagesInThread(botMessages);
       } catch (error) {
         console.error("Error during RAG API call:", error);
@@ -126,12 +157,12 @@ const ChatPage: React.FC = () => {
           sender: "bot",
           timestamp: new Date(),
         };
-        setMessages((prevMessages) => [...prevMessages, errorMessage]);
         setMessagesInThread(errorMessage);
+      } finally {
         setIsSending(false);
       }
     },
-    [currentThreadId]
+    [currentThreadId, topK, searchMode]
   );
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -149,6 +180,8 @@ const ChatPage: React.FC = () => {
         currentThreadId={currentThreadId}
         onSelectTread={handleSelectedThread}
         onNewChat={handleNewChat}
+        currentTopK={topK}
+        currentSearchMode={searchMode}
         onSelectSearch={handleSelectedMode}
         onSelectTopK={handleSelectedTopK}
       />
