@@ -1,0 +1,28 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.3.0
+    hooks:
+      - id: black
+        language_version: python3.12
+        args: ["--config=pyproject.toml"]
+
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1
+    hooks:
+      - id: isort
+        args: ["--settings-path=pyproject.toml"]
+
+  - repo: https://github.com/pycqa/flake8
+    rev: 5.0.4
+    hooks:
+      - id: flake8
+        additional_dependencies: ["flake8-black"]
+        # flake8 が pyproject を読めない場合は settings-path は不要。必要なら .flake8 を用いる。
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.4.1
+    hooks:
+      - id: mypy
+        args: ["--config-file=mypy.ini"]
+        additional_dependencies:
+          - fastapi # FastAPIの型ヒントを正しく解析する

@@ -1,0 +1,29 @@
+[tool.black]
+line-length = 120
+target-version = ["py312"]
+include='\.pyi?$'
+skip-string-normalization = true
+
+[tool.isort]
+profile = "black"
+line_length = 120
+multi_line_output = 4
+include_trailing_comma = true
+force_grid_wrap = 0
+combine_as_imports = true
+force_single_line = false
+skip = ["build", "dist", ".venv"]
+use_parentheses = true
+float_to_top = true
+skip_gitignore = true
+lines_after_imports = 2
+# 以下は必要に応じて設定
+# known_first_party = ["my_package"]
+# known_third_party = ["requests"]
+
+[tool.flake8]
+max-line-length = 120
+extend-ignore = ["W503", "I100", "I201", "W292", "E203"]
+# W503とE203はBlackと競合するため無視
+# I100, I201はisortと競合するため無視
+# flake8 はバージョンにより pyproject.toml をサポートしない場合があるため、必要なら .flake8 を併用する
