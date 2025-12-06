@@ -12,7 +12,7 @@ export const msalConfig: Configuration = {
     navigateToLoginRequestUrl: false, // ログイン後に元のURLにリダイレクトするかどうか
   },
   cache: {
-    cacheLocation: BrowserCacheLocation.LocalStorage, // セッションストレージを使用
+    cacheLocation: BrowserCacheLocation.SessionStorage, // セッションストレージを使用
   },
   system: {
     loggerOptions: {

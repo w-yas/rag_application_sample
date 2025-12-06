@@ -198,4 +198,6 @@ const ChatPage: React.FC = () => {
   );
 };
 
-export default ChatPage;
+import { withAuthRedirect } from "../components/withAuthRedirect";
+
+export default withAuthRedirect(ChatPage);
