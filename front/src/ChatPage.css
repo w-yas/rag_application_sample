@@ -7,12 +7,43 @@ body {
   margin: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f4f4f4;
+
+  padding-top: 60px;
+}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000; /* ヘッダーを最前面に表示 */
+
+  background-color: #343a40;
+  color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.app-header .user-header {
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin: 0; /* h1タグのデフォルトマージンをリセット */
+}
+
+.app-header .user-name {
+  font-size: 0.95rem;
+  margin: 0; /* pタグのデフォルトマージンをリセット */
+  white-space: nowrap; /* テキストが折り返されないようにする */
 }
 
 /* ページ全体のコンテナ: サイドバーとメインエリアを横並びにする */
 .chat-container {
   display: flex;
-  height: 100vh; /* ビューポートの高さ全体を使う */
+  height: calc(100vh -60px); /* ビューポートの高さ全体を使う */
 }
 
 /* ========================================================= */
