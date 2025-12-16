@@ -1,15 +1,15 @@
 import asyncio
 import os
 from time import time
+from typing import Any
 
 import httpx
 import jwt
+from back.api.utils.logging import logger
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt import PyJWKClient
 from pydantic import BaseModel
-
-from back.api.utils.logging import logger
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -19,7 +19,7 @@ WELL_KNOWN = os.getenv("WELL_KNOWN")
 
 
 class TokenClaims(BaseModel):
-    claims: dict
+    claims: dict[str, Any]
 
 
 class JwksProvider:
@@ -34,7 +34,7 @@ class JwksProvider:
         async with httpx.AsyncClient(timeout=5) as client:
             response = await client.get(self.well_known_url)
             response.raise_for_status()
-            return response.json()["jwks_uri"]
+            return str(response.json()["jwks_uri"])
 
     async def get_client(self) -> PyJWKClient:
         current_time = time()
@@ -55,9 +55,8 @@ class JwksProvider:
             jwks_uri = await self._fetch_jwks_uri()
             self.jwks_client = PyJWKClient(jwks_uri)
             self._fetched_at = time()
-            return self.jwks_client
 
-    async def get_signing_key_with_retry(self, token: str):
+    async def get_signing_key_with_retry(self, token: str) -> Any:
         try:
             client = await self.get_client()
             clients = client.get_signing_key_from_jwt(token)
@@ -78,20 +77,19 @@ class JwksProvider:
                 return clients_retry
             except Exception as e_retry:
                 # 2回目の失敗も鍵が見つからない場合、サーバー側の問題として HTTPException を送出
-                logger.error(
-                    f"Second attempt failed. Exception: {type(e_retry).__name__}: {e_retry}"
-                )
+                logger.error(f"Second attempt failed. Exception: {type(e_retry).__name__}: {e_retry}")
                 raise  # get_token の例外処理でキャッチされる
 
+
+if WELL_KNOWN is None:
+    raise ValueError("WELL_KNOWN環境変数が設定されていません")
 
 _jwks_provider = JwksProvider(WELL_KNOWN, ttl=3600)
 
 
 async def get_token(id_token: str = Depends(oauth2_scheme)) -> TokenClaims:
     if not id_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="認証トークンが提供されていません"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="認証トークンが提供されていません")
     try:
         signing_key = await _jwks_provider.get_signing_key_with_retry(id_token)
         options = {
@@ -112,22 +110,14 @@ async def get_token(id_token: str = Depends(oauth2_scheme)) -> TokenClaims:
         return TokenClaims(claims=claims)
 
     except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="トークンの有効期限が切れています"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="トークンの有効期限が切れています")
     except jwt.InvalidAudienceError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="無効なオーディエンス"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="無効なオーディエンス")
     except jwt.InvalidIssuerError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="無効な発行者")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="無効なトークン")
     except httpx.HTTPError:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="認証サービスに接続できません"
-        )
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="認証サービスに接続できません")
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="トークンの検証に失敗しました"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="トークンの検証に失敗しました")

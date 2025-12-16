@@ -1,9 +1,8 @@
 import contextvars
 from typing import Optional
 
-_request_id_var: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(
-    "request_id", default=None
-)
+
+_request_id_var: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar("request_id", default=None)
 
 
 def set_request_id(request_id: str) -> None:

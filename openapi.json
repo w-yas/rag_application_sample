@@ -1,0 +1,220 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FastAPI",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Get Root",
+        "operationId": "get_root",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/chat": {
+      "post": {
+        "summary": "Chat",
+        "operationId": "chat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RagChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RagChatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "RagChatRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "\u30e6\u30fc\u30b6\u30fc\u304b\u3089\u306e\u554f\u3044\u5408\u308f\u305b\u5185\u5bb9"
+          },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 50.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K",
+            "description": "\u53d6\u5f97\u3059\u308b\u30c9\u30ad\u30e5\u30e1\u30f3\u30c8\u306e\u4e0a\u4f4dK\u4ef6\u6570"
+          },
+          "search_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SearchMode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "\u30b5\u30fc\u30c1\u30e2\u30fc\u30c9\u306e\u6307\u5b9a",
+            "default": "full"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "description": "\u4f7f\u7528\u3059\u308b\u8a00\u8a9e\u30e2\u30c7\u30eb\u306e\u6307\u5b9a",
+            "default": "gpt-4o"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "top_k"
+        ],
+        "title": "RagChatRequest"
+      },
+      "RagChatResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "\u30e6\u30fc\u30b6\u30fc\u304b\u3089\u306e\u554f\u3044\u5408\u308f\u305b\u5185\u5bb9"
+          },
+          "response": {
+            "type": "string",
+            "title": "Response",
+            "description": "RAG\u3092\u7d4c\u7531\u3057\u305f\u5fdc\u7b54"
+          },
+          "documents": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Documents",
+            "description": "\u5fdc\u7b54\u751f\u6210\u306b\u4f7f\u7528\u3055\u308c\u305f\u30c9\u30ad\u30e5\u30e1\u30f3\u30c8\u306e\u30ea\u30b9\u30c8"
+          },
+          "search_mode": {
+            "type": "string",
+            "title": "Search Mode",
+            "description": "\u30b5\u30fc\u30c1\u30e2\u30fc\u30c9"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "response",
+          "documents",
+          "search_mode"
+        ],
+        "title": "RagChatResponse"
+      },
+      "SearchMode": {
+        "type": "string",
+        "enum": [
+          "full",
+          "hybrid",
+          "semantic"
+        ],
+        "title": "SearchMode"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "OAuth2PasswordBearer": {
+        "type": "oauth2",
+        "flows": {
+          "password": {
+            "scopes": {},
+            "tokenUrl": "token"
+          }
+        }
+      }
+    }
+  }
+}

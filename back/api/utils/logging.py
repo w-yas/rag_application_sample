@@ -5,7 +5,7 @@ from back.api.utils.add_request_id import get_request_id
 
 
 class RequestIDFilter(logging.Filter):
-    def filter(self, record):
+    def filter(self, record: logging.LogRecord) -> bool:
         # 1. 属性がレコードに存在しない場合
         if not hasattr(record, "request_id"):
             try:

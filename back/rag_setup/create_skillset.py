@@ -1,20 +1,22 @@
+import os
+
+from azure.core.credentials import AzureKeyCredential
+from azure.search.documents.indexes import SearchIndexerClient
 from azure.search.documents.indexes.models import (
-    SplitSkill,
+    AzureOpenAIEmbeddingSkill,
+    CognitiveServicesAccountKey,
+    EntityRecognitionSkill,
+    IndexProjectionMode,
     InputFieldMappingEntry,
     OutputFieldMappingEntry,
-    AzureOpenAIEmbeddingSkill,
-    EntityRecognitionSkill,
     SearchIndexerIndexProjection,
     SearchIndexerIndexProjectionSelector,
     SearchIndexerIndexProjectionsParameters,
-    IndexProjectionMode,
     SearchIndexerSkillset,
-    CognitiveServicesAccountKey,
+    SplitSkill,
 )
-from azure.search.documents.indexes import SearchIndexerClient
-from azure.core.credentials import AzureKeyCredential
-import os
 from dotenv import load_dotenv
+
 
 load_dotenv()
 

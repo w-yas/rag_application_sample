@@ -1,12 +1,11 @@
 import time
 import uuid
 
+from back.api.utils.add_request_id import set_request_id
+from back.api.utils.logging import logger
 from fastapi import status
 from fastapi.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
-
-from back.api.utils.add_request_id import set_request_id
-from back.api.utils.logging import logger
 
 
 # NOTE: contextvarが正しく機能するためにBaseHTTPMiddlewareではなくASGIミドルウェアを使用
@@ -19,10 +18,11 @@ class RequestIDMiddleware:
             try:
                 await self.app(scope, receive, send)
             except Exception as e:
-                return JSONResponse(
+                response = JSONResponse(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     content={"error": "Internal Server Error", "detail": str(e)},
                 )
+                await response(scope, receive, send)
             return
 
         # 受信ヘッダに x-request-id があれば使い、なければ新規生成
@@ -54,10 +54,12 @@ class RequestIDMiddleware:
         try:
             await self.app(scope, receive, send_wrapper)
         except Exception as e:
-            return JSONResponse(
+            response = JSONResponse(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content={"error": "Internal Server Error", "detail": str(e)},
             )
+            await response(scope, receive, send_wrapper)
+            return
 
         finally:
             duration_ms = (time.time() - start) * 1000

@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, Optional
+from typing import Annotated
 from uuid import uuid4
 
 from pydantic import BaseModel, Field
@@ -21,8 +21,8 @@ class RagChatResponse(BaseModel):
 
 class RagChatRequest(BaseModel):
     query: Annotated[str, Field(..., description="ユーザーからの問い合わせ内容")]
-    top_k: Annotated[Optional[int], Field(ge=1, le=50, description="取得するドキュメントの上位K件数")]
-    search_mode: Annotated[Optional[SearchMode], Field(SearchMode.FULL, description="サーチモードの指定")]
+    top_k: Annotated[int, Field(default=3, ge=1, le=50, description="取得するドキュメントの上位K件数")]
+    search_mode: Annotated[SearchMode, Field(default=SearchMode.FULL, description="サーチモードの指定")]
     model: Annotated[str, Field("gpt-4o", description="使用する言語モデルの指定")]
 
 

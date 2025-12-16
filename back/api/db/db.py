@@ -1,6 +1,9 @@
 import os
+from typing import Generator
+
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
+
 
 DB_USER = os.getenv("DB_USER", "user")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
@@ -9,7 +12,7 @@ DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "database")
 
 
-def get_db_config():
+def get_db_config() -> dict[str, str]:
     return {
         "DB_USER": DB_USER,
         "DB_PASSWORD": DB_PASSWORD,
@@ -25,11 +28,11 @@ DATABASE_URL = f"""
     """
 
 Engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=Engine)
+SessionLocal: sessionmaker[Session] = sessionmaker(autocommit=False, autoflush=False, bind=Engine)
 
 
-def get_db():
-    db = SessionLocal()
+def get_db() -> Generator[Session, None, None]:
+    db: Session = SessionLocal()
     try:
         yield db
     finally:

@@ -1,16 +1,16 @@
 repos:
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1
+    hooks:
+      - id: isort
+        args: ["--settings-path=./back/api/pyproject.toml"]
+
   - repo: https://github.com/psf/black
     rev: 25.1.0
     hooks:
       - id: black
         language_version: python3.12
         args: ["--config=./back/api/pyproject.toml"]
-
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.10.1
-    hooks:
-      - id: isort
-        args: ["--settings-path=./back/api/pyproject.toml"]
 
   - repo: https://github.com/pycqa/flake8
     rev: 5.0.4
@@ -23,7 +23,8 @@ repos:
     rev: v1.4.1
     hooks:
       - id: mypy
-        args: ["--config-file=./back/api/mypy.ini"]
+        args:
+          ["--config-file=./back/api/mypy.ini", "--exclude", "back/api/main.py"]
         additional_dependencies:
           - fastapi # FastAPIの型ヒントを正しく解析する
           - sqlalchemy

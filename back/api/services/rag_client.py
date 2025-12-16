@@ -1,9 +1,11 @@
 import os
-from azure.search.documents import SearchClient
-from openai import AzureOpenAI
-from azure.search.documents.models import VectorizableTextQuery
+from typing import Any, cast
+
 from azure.core.credentials import AzureKeyCredential
+from azure.search.documents import SearchClient
+from azure.search.documents.models import VectorizableTextQuery
 from back.api.utils.logging import logger
+from openai import AzureOpenAI
 
 
 class RagClient:
@@ -64,18 +66,14 @@ class RagClient:
             api_version=self.api_version,
         )
 
-    def find_documents(self, query: str, top_k: int = 3) -> list:
+    def find_documents(self, query: str, top_k: int = 3) -> list[dict[str, Any]]:
         try:
             # ベクトルクエリの設定
-            vector_query = VectorizableTextQuery(
-                text=query, k_nearest_neighbors=50, fields="text_vector"
-            )
+            vector_query = VectorizableTextQuery(text=query, k_nearest_neighbors=50, fields="text_vector")
 
             # 検索モードに基づいて検索を実行
             search_results = None  # 初期化
-            if (
-                self.search_mode == "semantic"
-            ):  # セマンティック検索+ハイブリット検索 + スコアリング
+            if self.search_mode == "semantic":  # セマンティック検索+ハイブリット検索 + スコアリング
                 search_results = self.search_client.search(
                     search_text=query,
                     query_type="semantic",
@@ -106,9 +104,9 @@ class RagClient:
                 return []
 
             # 検索結果の処理
-            documents = []
+            documents: list[dict[str, Any]] = []
             for result in search_results:
-                doc = {
+                doc: dict[str, Any] = {
                     "content": result.get("chunk", ""),
                     "title": result.get("title", ""),
                     "score": result.get("@search.score", 0.0),
@@ -122,7 +120,7 @@ class RagClient:
             logger.error(f"検索エラーの詳細: {str(e)}")
             raise Exception(f"ドキュメント検索中にエラーが発生しました: {e}")
 
-    def create_response(self, query: str, documents: list) -> str:
+    def create_response(self, query: str, documents: list[dict[str, Any]]) -> str | None:
         try:
             context = self._generate_context_from_documents(documents)
             system_message = """
@@ -137,25 +135,22 @@ class RagClient:
             response = self.openai_client.chat.completions.create(
                 model=self.deployment_name,
                 messages=messages,
-                temperature=(
-                    0.3 if self.search_mode == "hybrid" or self.search_mode == "semantic" else 0.7
-                ),
+                temperature=(0.3 if self.search_mode == "hybrid" or self.search_mode == "semantic" else 0.7),
                 max_tokens=1024,
             )
-            return response.choices[0].message.content
+            content = cast(str | None, response.choices[0].message.content)
+            return content
         except Exception as e:
             logger.error(f"応答生成中にエラーが発生しました: {e}")
             return "申し訳ありませんが、現在質問に答えることができません。後でもう一度お試しください。"
 
-    def _generate_context_from_documents(self, documents: list) -> str:
+    def _generate_context_from_documents(self, documents: list[dict[str, Any]]) -> str:
         context_parts = []
         for doc in documents:
-            context_parts.append(
-                f"タイトル: {doc['title']}\n内容: {doc['content']}\nスコア: {doc['score']:.2f}\n"
-            )
+            context_parts.append(f"タイトル: {doc['title']}\n内容: {doc['content']}\nスコア: {doc['score']:.2f}\n")
         return "\n---\n".join(context_parts)
 
-    def get_response_with_rag(self, query: str) -> dict:
+    def get_response_with_rag(self, query: str) -> dict[str, Any]:
         documents = self.find_documents(query, top_k=self.top_k)
         response = self.create_response(query, documents)
         return {

@@ -1,8 +1,10 @@
-from azure.search.documents.indexes.models import SearchIndexer, FieldMapping
-from azure.search.documents.indexes import SearchIndexerClient
-from azure.core.credentials import AzureKeyCredential
 import os
+
+from azure.core.credentials import AzureKeyCredential
+from azure.search.documents.indexes import SearchIndexerClient
+from azure.search.documents.indexes.models import FieldMapping, SearchIndexer
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -25,19 +27,13 @@ indexer = SearchIndexer(
     data_source_name="py-rag-tutorial-ds",
     field_mappings=[
         # metadata_storage_nameをtitleフィールドにマッピング
-        FieldMapping(
-            source_field_name="metadata_storage_name", target_field_name="title"
-        )
+        FieldMapping(source_field_name="metadata_storage_name", target_field_name="title")
     ],
     parameters=indexer_params,
 )
 
 # インデクサーの作成と実行
-indexer_client = SearchIndexerClient(
-    endpoint=AZURE_SEARCH_SERVICE, credential=credential
-)
+indexer_client = SearchIndexerClient(endpoint=AZURE_SEARCH_SERVICE, credential=credential)
 indexer_result = indexer_client.create_or_update_indexer(indexer)
 
-print(
-    f"{indexer_name} は作成し実行されてます。 クエリを実行するには数分かかる場合があります。"
-)
+print(f"{indexer_name} は作成し実行されてます。 クエリを実行するには数分かかる場合があります。")

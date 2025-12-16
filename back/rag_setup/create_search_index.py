@@ -1,24 +1,26 @@
+import os
+
+from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexClient
 from azure.search.documents.indexes.models import (
-    SearchField,
-    SearchFieldDataType,
-    VectorSearch,
-    HnswAlgorithmConfiguration,
-    VectorSearchProfile,
     AzureOpenAIVectorizer,
     AzureOpenAIVectorizerParameters,
+    HnswAlgorithmConfiguration,
+    ScoringProfile,
+    SearchField,
+    SearchFieldDataType,
     SearchIndex,
     SemanticConfiguration,
     SemanticField,
     SemanticPrioritizedFields,
-    ScoringProfile,
+    SemanticSearch,
     TagScoringFunction,
     TagScoringParameters,
-    SemanticSearch,
+    VectorSearch,
+    VectorSearchProfile,
 )
-import os
-from azure.core.credentials import AzureKeyCredential
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -93,9 +95,7 @@ semantic_config = SemanticConfiguration(
     name="my-semantic-config",
     prioritized_fields=SemanticPrioritizedFields(  # 検索時に優先されるフィールド
         title_field=SemanticField(field_name="title"),
-        keywords_fields=[
-            SemanticField(field_name="locations")
-        ],  # キーワード候補として使用するフィールド
+        keywords_fields=[SemanticField(field_name="locations")],  # キーワード候補として使用するフィールド
         content_fields=[SemanticField(field_name="chunk")],
     ),
 )
