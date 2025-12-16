@@ -20,11 +20,12 @@ repos:
         # flake8 が pyproject を読めない場合は settings-path は不要。必要なら .flake8 を用いる。
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.4.1
+    rev: v1.19.1
     hooks:
       - id: mypy
-        args:
-          ["--config-file=./back/api/mypy.ini", "--exclude", "back/api/main.py"]
+        args: ["--config-file=./back/api/mypy.ini"]
         additional_dependencies:
           - fastapi # FastAPIの型ヒントを正しく解析する
           - sqlalchemy
+          - starlette
+          - typing-extensions

@@ -2,13 +2,7 @@ import json
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
-
-from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.routing import APIRoute
-from starlette.exceptions import HTTPException
-from starlette.middleware.cors import CORSMiddleware
+from typing import Any, AsyncGenerator, Callable, cast
 
 from back.api.middlewares.request_id_middleware import RequestIDMiddleware
 from back.api.routes.route import router
@@ -18,10 +12,16 @@ from back.api.utils.exception_handler import (
     validation_exception_handler,
 )
 from back.api.utils.logging import logger
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.routing import APIRoute
+from starlette.exceptions import HTTPException
+from starlette.middleware.cors import CORSMiddleware
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     if os.getenv("ENV") == "development":
         try:
             out_path = Path(__file__).parent.parent.parent / "openapi.json"
@@ -76,12 +76,11 @@ def use_route_names_as_operation_ids(app: FastAPI) -> None:
 
 app = create_app()
 
-# 既定の HTTPException 処理のオーバーライド
-app.add_exception_handler(HTTPException, http_exception_handler)
-# リクエストバリデーションエラー(422) のハンドラ
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-# 未処理例外のハンドラ（Exception を捕ることで 500 を一元化）
-app.add_exception_handler(Exception, generic_exception_handler)
+app.add_exception_handler(HTTPException, cast(Callable[[Request, Exception], Any], http_exception_handler))
+app.add_exception_handler(
+    RequestValidationError, cast(Callable[[Request, Exception], Any], validation_exception_handler)
+)
+app.add_exception_handler(Exception, cast(Callable[[Request, Exception], Any], generic_exception_handler))
 
 
 use_route_names_as_operation_ids(app)
