@@ -1,0 +1,55 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "eslint.validate": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact"
+  ],
+  "eslint.packageManager": "npm", // ESLint実行時に利用するpackage manager
+  "eslint.options": {
+    "extensions": [".js", ".jsx", ".ts", ".tsx"]
+  },
+  "prettier.requireConfig": false, // 設定ファイルは必須ではない
+  "javascript.format.enable": false,
+  "typescript.format.enable": false,
+  "editor.tabSize": 2,
+  "editor.detectIndentation": false,
+  "files.eol": "\n",
+  "[python]": {
+    "editor.tabSize": 4, // インデント・スペースサイズを4に設定
+    "editor.insertSpaces": true, // スペースを使用してインデント
+    "files.trimTrailingWhitespace": true, // 行末の空白を自動的に削除
+    "editor.defaultFormatter": "ms-python.black-formatter",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+  "black-formatter.args": [
+    "--line-length",
+    "99" // 最大行長を99に設定
+  ],
+  "flake8.args": [
+    "--max-line-length=99", // PEP最大行長を99に設定
+    "--max-doc-length=72", // ドキュメンテーションの最大長を72文字に設定
+    "--ignore=W503,I100,I201" // 演算子前改行・import順序等の警告を無視
+  ],
+  "isort.args": [
+    "--profile",
+    "black", // Blackスタイルのインポート順序を使用
+    "--line-length",
+    "99", // 最大行長を99文字に設定
+    "--multi-line",
+    "3", // 複数行のインポート方式（3はisortのスタイル番号）
+    "--force-grid-wrap",
+    "0", // グリッドラップを強制しない
+    "--use-parentheses", // ()を使用してインポートをグループ化
+    "--trailing-comma" // 最後のインポートにカンマをつける
+  ]
+}
