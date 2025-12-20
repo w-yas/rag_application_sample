@@ -33,10 +33,11 @@
   },
   "black-formatter.args": [
     "--line-length",
-    "99" // 最大行長を99に設定
+    "99", // 最大行長を99に設定
+    "--include-trailing-comma=false" // トレーリングカンマを含めない
   ],
   "flake8.args": [
-    "--max-line-length=99", // PEP最大行長を99に設定
+    "--max-line-length=120", // PEP最大行長を99に設定
     "--max-doc-length=72", // ドキュメンテーションの最大長を72文字に設定
     "--ignore=W503,I100,I201" // 演算子前改行・import順序等の警告を無視
   ],

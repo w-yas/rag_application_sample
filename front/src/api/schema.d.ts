@@ -38,10 +38,119 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/threads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get User Chat History */
+        get: operations["get_user_chat_history"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/thread": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Thread */
+        post: operations["create_thread"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/thread/{thread_id}/title": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update Thread Title */
+        put: operations["update_thread_title"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ChatMessage */
+        ChatMessage: {
+            /**
+             * Id
+             * @description メッセージの一意な識別子
+             */
+            id?: string;
+            /**
+             * Thread Id
+             * @description メッセージが属するチャットスレッドの識別子
+             */
+            thread_id: string;
+            /**
+             * Text
+             * @description メッセージの内容
+             */
+            text: string;
+            /**
+             * Sender
+             * @description メッセージの送信者（例: 'user', 'bot'）
+             */
+            sender: string;
+            /**
+             * Timestamp
+             * Format: date-time
+             * @description メッセージの送信日時
+             */
+            timestamp?: string;
+        };
+        /** ChatThread */
+        ChatThread: {
+            /**
+             * Id
+             * @description チャットスレッドの一意な識別子
+             */
+            id?: string;
+            /**
+             * User Id
+             * @description チャットスレッドの所有者であるユーザーの識別子
+             */
+            user_id: string;
+            /**
+             * Title
+             * @description チャットスレッドのタイトル
+             */
+            title: string;
+            /**
+             * Created At
+             * Format: date-time
+             * @description チャットスレッドの作成日時
+             */
+            created_at?: string;
+            /**
+             * Messages
+             * @description チャットスレッド内のメッセージ一覧
+             */
+            messages?: components["schemas"]["ChatMessage"][];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -57,13 +166,14 @@ export interface components {
             /**
              * Top K
              * @description 取得するドキュメントの上位K件数
+             * @default 3
              */
-            top_k: number | null;
+            top_k: number;
             /**
              * @description サーチモードの指定
              * @default full
              */
-            search_mode: components["schemas"]["SearchMode"] | null;
+            search_mode: components["schemas"]["SearchMode"];
             /**
              * Model
              * @description 使用する言語モデルの指定
@@ -99,6 +209,14 @@ export interface components {
          * @enum {string}
          */
         SearchMode: "full" | "hybrid" | "semantic";
+        /** ThreadResponse */
+        ThreadResponse: {
+            /**
+             * Threads
+             * @description ユーザーに関連するチャットスレッドのリスト
+             */
+            threads: components["schemas"]["ChatThread"][];
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -157,6 +275,81 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RagChatResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_user_chat_history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThreadResponse"];
+                };
+            };
+        };
+    };
+    create_thread: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChatThread"];
+                };
+            };
+        };
+    };
+    update_thread_title: {
+        parameters: {
+            query: {
+                new_title: string;
+            };
+            header?: never;
+            path: {
+                thread_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
             /** @description Validation Error */

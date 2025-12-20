@@ -5,11 +5,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
 
-DB_USER = os.getenv("DB_USER", "user")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "example")
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "database")
+DB_NAME = os.getenv("DB_NAME", "chat_db")
 
 
 def get_db_config() -> dict[str, str]:
@@ -25,7 +25,9 @@ def get_db_config() -> dict[str, str]:
 _db = get_db_config()
 DATABASE_URL = f"""
     postgresql://{_db['DB_USER']}:{_db['DB_PASSWORD']}@{_db['DB_HOST']}:{_db['DB_PORT']}/{_db['DB_NAME']}
-    """
+    """.replace(
+    "\n", ""
+).strip()
 
 Engine = create_engine(DATABASE_URL)
 SessionLocal: sessionmaker[Session] = sessionmaker(autocommit=False, autoflush=False, bind=Engine)

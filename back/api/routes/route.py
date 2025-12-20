@@ -1,10 +1,15 @@
 import os
 
 from back.api.auth.auth import TokenClaims, get_token
-from back.api.schemas.chat_schema import RagChatRequest, RagChatResponse
+from back.api.db.db import get_db
+from back.api.models import Thread
+from back.api.schemas.chat_schema import ChatThread, RagChatRequest, RagChatResponse, ThreadResponse
 from back.api.services.rag_client import RagClient
-from fastapi import APIRouter, Depends
+from back.api.utils.logging import logger
+from fastapi import APIRouter, Depends, HTTPException, status  # 追加
 from fastapi.responses import JSONResponse
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 
 router = APIRouter()
@@ -28,7 +33,9 @@ async def get_root(token: TokenClaims = Depends(get_token)) -> JSONResponse:
 
 
 @router.post("/chat", response_model=RagChatResponse)
-async def chat(request: RagChatRequest) -> RagChatResponse | dict[str, str]:
+async def chat(
+    request: RagChatRequest, token: TokenClaims = Depends(get_token)
+) -> RagChatResponse | dict[str, str]:
     try:
         search_endpoint = get_env_or_raise("SEARCH_ENDPOINT")
         search_api_key = get_env_or_raise("SEARCH_API_KEY")
@@ -59,3 +66,68 @@ async def chat(request: RagChatRequest) -> RagChatResponse | dict[str, str]:
         documents=results["documents"],
         search_mode=results["search_mode"],
     )
+
+
+@router.get("/threads", response_model=ThreadResponse, status_code=status.HTTP_200_OK)
+def get_user_chat_history(
+    token: TokenClaims = Depends(get_token), db: Session = Depends(get_db)
+) -> ThreadResponse:
+    try:
+        stmt = select(Thread).where(Thread.user_id == token.claims.get("sub"))
+        result = db.scalars(stmt)
+        threads = result.all()
+        chat_threads = [ChatThread.model_validate(t) for t in threads]
+        return ThreadResponse(threads=chat_threads)
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/thread", response_model=ChatThread, status_code=status.HTTP_201_CREATED)
+def create_thread(
+    token: TokenClaims = Depends(get_token), db: Session = Depends(get_db)
+) -> ChatThread:
+    try:
+        user_id = token.claims.get("sub")
+        new_thread = Thread(user_id=user_id, title="New Chat Thread")
+
+        db.add(new_thread)
+        db.commit()
+        db.refresh(new_thread)
+
+        return ChatThread.model_validate(new_thread)
+
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Thread creation failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/thread/{thread_id}/title", status_code=status.HTTP_200_OK)
+def update_thread_title(
+    thread_id: str,
+    new_title: str,
+    token: TokenClaims = Depends(get_token),
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    try:
+        stmt = select(Thread).where(
+            Thread.id == thread_id, Thread.user_id == token.claims.get("sub")
+        )
+        result = db.execute(stmt)
+        thread = result.scalar_one_or_none()
+
+        if thread is None:
+            raise HTTPException(status_code=404, detail="Thread not found")
+
+        thread.title = new_title
+        db.commit()
+        return {"message": "Thread title updated successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+
+        db.rollback()
+        logger.error(f"Failed to update thread title: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

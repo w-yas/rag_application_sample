@@ -61,12 +61,196 @@
               }
             }
           }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/threads": {
+      "get": {
+        "summary": "Get User Chat History",
+        "operationId": "get_user_chat_history",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThreadResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/thread": {
+      "post": {
+        "summary": "Create Thread",
+        "operationId": "create_thread",
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatThread"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ]
+      }
+    },
+    "/thread/{thread_id}/title": {
+      "put": {
+        "summary": "Update Thread Title",
+        "operationId": "update_thread_title",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "thread_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Thread Id"
+            }
+          },
+          {
+            "name": "new_title",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "New Title"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Update Thread Title Thread  Thread Id  Title Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
         }
       }
     }
   },
   "components": {
     "schemas": {
+      "ChatMessage": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\u306e\u4e00\u610f\u306a\u8b58\u5225\u5b50"
+          },
+          "thread_id": {
+            "type": "string",
+            "title": "Thread Id",
+            "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\u304c\u5c5e\u3059\u308b\u30c1\u30e3\u30c3\u30c8\u30b9\u30ec\u30c3\u30c9\u306e\u8b58\u5225\u5b50"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\u306e\u5185\u5bb9"
+          },
+          "sender": {
+            "type": "string",
+            "title": "Sender",
+            "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\u306e\u9001\u4fe1\u8005\uff08\u4f8b: 'user', 'bot'\uff09"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "\u30e1\u30c3\u30bb\u30fc\u30b8\u306e\u9001\u4fe1\u65e5\u6642"
+          }
+        },
+        "type": "object",
+        "required": [
+          "thread_id",
+          "text",
+          "sender"
+        ],
+        "title": "ChatMessage"
+      },
+      "ChatThread": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "\u30c1\u30e3\u30c3\u30c8\u30b9\u30ec\u30c3\u30c9\u306e\u4e00\u610f\u306a\u8b58\u5225\u5b50"
+          },
+          "user_id": {
+            "type": "string",
+            "title": "User Id",
+            "description": "\u30c1\u30e3\u30c3\u30c8\u30b9\u30ec\u30c3\u30c9\u306e\u6240\u6709\u8005\u3067\u3042\u308b\u30e6\u30fc\u30b6\u30fc\u306e\u8b58\u5225\u5b50"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "\u30c1\u30e3\u30c3\u30c8\u30b9\u30ec\u30c3\u30c9\u306e\u30bf\u30a4\u30c8\u30eb"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "\u30c1\u30e3\u30c3\u30c8\u30b9\u30ec\u30c3\u30c9\u306e\u4f5c\u6210\u65e5\u6642"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ChatMessage"
+            },
+            "type": "array",
+            "title": "Messages",
+            "description": "\u30c1\u30e3\u30c3\u30c8\u30b9\u30ec\u30c3\u30c9\u5185\u306e\u30e1\u30c3\u30bb\u30fc\u30b8\u4e00\u89a7"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "title"
+        ],
+        "title": "ChatThread"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -88,28 +272,15 @@
             "description": "\u30e6\u30fc\u30b6\u30fc\u304b\u3089\u306e\u554f\u3044\u5408\u308f\u305b\u5185\u5bb9"
           },
           "top_k": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "maximum": 50.0,
-                "minimum": 1.0
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
             "title": "Top K",
-            "description": "\u53d6\u5f97\u3059\u308b\u30c9\u30ad\u30e5\u30e1\u30f3\u30c8\u306e\u4e0a\u4f4dK\u4ef6\u6570"
+            "description": "\u53d6\u5f97\u3059\u308b\u30c9\u30ad\u30e5\u30e1\u30f3\u30c8\u306e\u4e0a\u4f4dK\u4ef6\u6570",
+            "default": 3
           },
           "search_mode": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/SearchMode"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "$ref": "#/components/schemas/SearchMode",
             "description": "\u30b5\u30fc\u30c1\u30e2\u30fc\u30c9\u306e\u6307\u5b9a",
             "default": "full"
           },
@@ -122,8 +293,7 @@
         },
         "type": "object",
         "required": [
-          "query",
-          "top_k"
+          "query"
         ],
         "title": "RagChatRequest"
       },
@@ -170,6 +340,23 @@
           "semantic"
         ],
         "title": "SearchMode"
+      },
+      "ThreadResponse": {
+        "properties": {
+          "threads": {
+            "items": {
+              "$ref": "#/components/schemas/ChatThread"
+            },
+            "type": "array",
+            "title": "Threads",
+            "description": "\u30e6\u30fc\u30b6\u30fc\u306b\u95a2\u9023\u3059\u308b\u30c1\u30e3\u30c3\u30c8\u30b9\u30ec\u30c3\u30c9\u306e\u30ea\u30b9\u30c8"
+          }
+        },
+        "type": "object",
+        "required": [
+          "threads"
+        ],
+        "title": "ThreadResponse"
       },
       "ValidationError": {
         "properties": {

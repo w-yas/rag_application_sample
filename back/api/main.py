@@ -51,7 +51,7 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=["*"],
         allow_credentials=True,
-        allow_methods=["POST", "GET"],
+        allow_methods=["*"],
         allow_headers=["*"],
         expose_headers=["x-request-id"],
     )
@@ -76,11 +76,15 @@ def use_route_names_as_operation_ids(app: FastAPI) -> None:
 
 app = create_app()
 
-app.add_exception_handler(HTTPException, cast(Callable[[Request, Exception], Any], http_exception_handler))
+app.add_exception_handler(
+    HTTPException, cast(Callable[[Request, Exception], Any], http_exception_handler)
+)
 app.add_exception_handler(
     RequestValidationError, cast(Callable[[Request, Exception], Any], validation_exception_handler)
 )
-app.add_exception_handler(Exception, cast(Callable[[Request, Exception], Any], generic_exception_handler))
+app.add_exception_handler(
+    Exception, cast(Callable[[Request, Exception], Any], generic_exception_handler)
+)
 
 
 use_route_names_as_operation_ids(app)
