@@ -3,6 +3,7 @@ import traceback
 from typing import Any
 
 from back.api.utils.add_request_id import get_request_id
+from back.api.utils.logging import logger
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -12,7 +13,12 @@ from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 
 # Starletteの内部コードやStarletteの拡張機能やプラグインの一部がHTTPExceptionを発生させた場合、ハンドラがそれをキャッチして処理する
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
-    headers = getattr(exc, "headers", None)  # Fast APIのHTTPExceptionの場合はレスポンスに含まれるヘッダを追加できる
+    headers = getattr(
+        exc, "headers", None
+    )  # Fast APIのHTTPExceptionの場合はレスポンスに含まれるヘッダを追加できる
+    logger.error(
+        f"HTTP Exception: {exc.detail}, Path: {request.url.path}, Request ID: {get_request_id()}"
+    )
     payload: dict[str, Any] = {
         "message": "HTTP Exception",
         "detail": exc.detail,
@@ -22,7 +28,9 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     return JSONResponse(content=payload, status_code=exc.status_code, headers=headers)
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     detail = exc.errors()
     payload: dict[str, Any] = {
         "message": "Validation Error",

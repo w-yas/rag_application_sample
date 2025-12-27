@@ -1,6 +1,6 @@
 import type React from "react";
 import "../ChatPage.css";
-import type { ChatMessage } from "../types/chat";
+import type { ChatMessage } from "../pages/ChatPage";
 interface ChatMainProps {
   messages: ChatMessage[] | undefined;
   userInput: string;
@@ -42,9 +42,7 @@ const ChatMain: React.FC<ChatMainProps> = ({
               className={`message-bubble message-${msg.sender}`}
             >
               <div className="message-text">{msg.text}</div>
-              <small className="message-time">
-                {msg.timestamp.toLocaleTimeString()}
-              </small>
+              <small className="message-time">{msg.timestamp}</small>
             </div>
           ))
         )}

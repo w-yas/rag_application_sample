@@ -12,6 +12,13 @@ class SearchMode(str, Enum):
     SEMANTIC = "semantic"
 
 
+class ErrorResponse(BaseModel):
+    message: str
+    detail: str
+    request_id: str
+    path: str
+
+
 class RagChatResponse(BaseModel):
     query: Annotated[str, Field(..., description="ユーザーからの問い合わせ内容")]
     response: Annotated[str, Field(..., description="RAGを経由した応答")]

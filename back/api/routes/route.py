@@ -2,14 +2,25 @@ import os
 
 from back.api.auth.auth import TokenClaims, get_token
 from back.api.db.db import get_db
-from back.api.models import Thread
-from back.api.schemas.chat_schema import ChatThread, RagChatRequest, RagChatResponse, ThreadResponse
+from back.api.models import Message, Thread
+from back.api.schemas.chat_schema import (
+    ChatThread,
+    ErrorResponse,
+    RagChatRequest,
+    RagChatResponse,
+    ThreadResponse,
+)
 from back.api.services.rag_client import RagClient
 from back.api.utils.logging import logger
-from fastapi import APIRouter, Depends, HTTPException, status  # 追加
+from dotenv import load_dotenv
+from fastapi import APIRouter, Depends, status  # 追加
 from fastapi.responses import JSONResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from starlette.exceptions import HTTPException
+
+
+load_dotenv()
 
 
 router = APIRouter()
@@ -32,7 +43,7 @@ async def get_root(token: TokenClaims = Depends(get_token)) -> JSONResponse:
     )
 
 
-@router.post("/chat", response_model=RagChatResponse)
+@router.post("/chat", response_model=RagChatResponse, responses={500: {"model": ErrorResponse}})
 async def chat(
     request: RagChatRequest, token: TokenClaims = Depends(get_token)
 ) -> RagChatResponse | dict[str, str]:
@@ -58,7 +69,9 @@ async def chat(
         query = request.query
         results = rag_client.get_response_with_rag(query)
     except Exception as e:
-        return {"error": str(e)}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Backend Error: {str(e)}"
+        )
 
     return RagChatResponse(
         query=results["query"],
@@ -123,11 +136,39 @@ def update_thread_title(
         thread.title = new_title
         db.commit()
         return {"message": "Thread title updated successfully"}
-
-    except HTTPException:
-        raise
     except Exception as e:
-
         db.rollback()
         logger.error(f"Failed to update thread title: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{thread_id}/message", status_code=status.HTTP_201_CREATED)
+def create_message(
+    thread_id: str,
+    message_text: str,
+    sender: str,
+    token: TokenClaims = Depends(get_token),
+    db: Session = Depends(get_db),
+) -> dict[str, str]:
+    try:
+        stmt = select(Thread).where(
+            Thread.id == thread_id, Thread.user_id == token.claims.get("sub")
+        )
+        result = db.execute(stmt)
+        thread = result.scalar_one_or_none()
+
+        if thread is None:
+            raise HTTPException(status_code=404, detail="Thread not found")
+
+        message = Message(
+            thread_id=thread_id,
+            text=message_text,
+            sender=sender,
+        )
+        db.add(message)
+        db.commit()
+        return {"message": "Message created successfully"}
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Failed to create message: {e}")
         raise HTTPException(status_code=500, detail=str(e))

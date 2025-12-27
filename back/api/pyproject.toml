@@ -1,12 +1,12 @@
 [tool.black]
-line-length = 100
+line-length = 99
 target-version = ["py312"]
 include = '\.pyi?$'
 skip-string-normalization = true
 
 [tool.isort]
 profile = "black"
-line_length = 100
+line_length = 99
 include_trailing_comma = true
 force_grid_wrap = 0
 combine_as_imports = true
@@ -21,7 +21,7 @@ lines_after_imports = 2
 
 [tool.flake8]
 max-line-length = 120
-extend-ignore = ["W503", "I100", "I201", "W292", "E203"]
+extend-ignore = ["W503", "I99", "I201", "W292", "E203"]
 # W503とE203はBlackと競合するため無視
 # I100, I201はisortと競合するため無視
 # flake8 はバージョンにより pyproject.toml をサポートしない場合があるため、必要なら .flake8 を併用する

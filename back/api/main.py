@@ -46,6 +46,8 @@ def create_app() -> FastAPI:
     application = FastAPI(
         lifespan=lifespan,
     )
+    # ミドルウェアの追加
+    application.add_middleware(RequestIDMiddleware)
 
     application.add_middleware(
         CORSMiddleware,
@@ -56,8 +58,6 @@ def create_app() -> FastAPI:
         expose_headers=["x-request-id"],
     )
 
-    # ミドルウェアの追加
-    application.add_middleware(RequestIDMiddleware)
     application.add_middleware(
         TrustedHostMiddleware,
         allowed_hosts=os.getenv("TRUSTED_HOSTS", "*").split(","),

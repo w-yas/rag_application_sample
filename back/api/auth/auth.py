@@ -6,10 +6,14 @@ from typing import Any
 import httpx
 import jwt
 from back.api.utils.logging import logger
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jwt import PyJWKClient
 from pydantic import BaseModel
+
+
+load_dotenv()
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -77,7 +81,9 @@ class JwksProvider:
                 return clients_retry
             except Exception as e_retry:
                 # 2回目の失敗も鍵が見つからない場合、サーバー側の問題として HTTPException を送出
-                logger.error(f"Second attempt failed. Exception: {type(e_retry).__name__}: {e_retry}")
+                logger.error(
+                    f"Second attempt failed. Exception: {type(e_retry).__name__}: {e_retry}"
+                )
                 raise  # get_token の例外処理でキャッチされる
 
 
@@ -89,7 +95,9 @@ _jwks_provider = JwksProvider(WELL_KNOWN, ttl=3600)
 
 async def get_token(id_token: str = Depends(oauth2_scheme)) -> TokenClaims:
     if not id_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="認証トークンが提供されていません")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="認証トークンが提供されていません"
+        )
     try:
         signing_key = await _jwks_provider.get_signing_key_with_retry(id_token)
         options = {
@@ -110,14 +118,22 @@ async def get_token(id_token: str = Depends(oauth2_scheme)) -> TokenClaims:
         return TokenClaims(claims=claims)
 
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="トークンの有効期限が切れています")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="トークンの有効期限が切れています"
+        )
     except jwt.InvalidAudienceError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="無効なオーディエンス")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="無効なオーディエンス"
+        )
     except jwt.InvalidIssuerError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="無効な発行者")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="無効なトークン")
     except httpx.HTTPError:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="認証サービスに接続できません")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="認証サービスに接続できません"
+        )
     except Exception:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="トークンの検証に失敗しました")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="トークンの検証に失敗しました"
+        )

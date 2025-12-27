@@ -4,29 +4,43 @@ import * as ApiTypes from "../api/schema";
 import ChatMain from "../components/ChatMain";
 import ChatSidebar from "../components/ChatSidebar";
 import { client } from "../lib/apiClient";
-import type { ChatMessage, ChatThread } from "../types/chat";
 
+export type ChatMessage = ApiTypes.components["schemas"]["ChatMessage"];
+export type ChatThread = ApiTypes.components["schemas"]["ChatThread"];
 type RagChatRequest = ApiTypes.components["schemas"]["RagChatRequest"];
 type SearchMode =
   ApiTypes.components["schemas"]["RagChatRequest"]["search_mode"];
-
-const initialThreads: ChatThread[] = [
-  {
-    id: `${Date.now()}`,
-    title: "最初の会話",
-    messages: [],
-  },
-];
 
 const ChatPage: React.FC = () => {
   // message, thread関連
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState<string>("");
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [threads, setThreads] = useState<ChatThread[]>(initialThreads);
+  const [threads, setThreads] = useState<ChatThread[]>([]);
   const [currentThreadId, setCurrentThreadId] = useState<string | undefined>(
-    initialThreads[0]?.id
+    undefined
   );
+
+  useEffect(() => {
+    client.GET("/threads").then((response) => {
+      if (response.error || !response.data) {
+        console.error("Threadsの取得に失敗しました");
+      }
+      if (response.data.threads && response.data.threads.length > 0) {
+        setThreads(response.data.threads);
+        setCurrentThreadId(response.data.threads[0]?.id);
+      } else {
+        client.POST("/thread").then((newThreadResponse) => {
+          if (newThreadResponse.error || !newThreadResponse.data) {
+            console.error("新しいスレッドの作成に失敗しました");
+            return;
+          }
+          setThreads([newThreadResponse.data as ChatThread]);
+          setCurrentThreadId(newThreadResponse.data.id);
+        });
+      }
+    });
+  }, []);
 
   // Search関連
   const [topK, setTopK] = useState<number>(3);
@@ -46,7 +60,7 @@ const ChatPage: React.FC = () => {
     // 現在アクティブなスレッドを見つける
     const activeThread = threads.find((thread) => thread.id == currentThreadId);
     if (activeThread) {
-      setMessages(activeThread.messages);
+      setMessages(activeThread.messages || []);
     } else {
       setMessages([]);
     }
@@ -64,42 +78,49 @@ const ChatPage: React.FC = () => {
     setCurrentThreadId(id);
   }, []);
 
-  const handleNewChat = useCallback(() => {
-    const newThread: ChatThread = {
-      id: `${Date.now()}`,
-      title: "新規チャット",
-      messages: [],
-    };
+  const handleNewChat = useCallback(async () => {
+    const newThread = await client.POST("/thread");
+    if (newThread.error || !newThread.data) {
+      console.error("Failed to create new thread");
+      return;
+    }
+    console.log("New thread created:", newThread.data);
+
     // 新しいスレッドをリストの先頭に追加し、それをアクティブにする
-    setThreads((prev) => [newThread, ...prev]);
-    setCurrentThreadId(newThread.id);
+    setThreads((prev) => [newThread.data as ChatThread, ...prev]);
+    setCurrentThreadId(newThread.data.id);
     setUserInput("");
   }, []);
 
-  const setMessagesInThread = (Message: ChatMessage) => {
-    setThreads((prevThreads) => {
-      return prevThreads.map((thread) => {
-        // 現在のスレッドIDと一致する場合
-        if (thread.id === currentThreadId) {
-          return {
-            ...thread,
-            messages: [...thread.messages, Message],
-          };
-        }
-        return thread;
-      });
+  const setMessagesInThread = (message: ChatMessage) => {
+    if (!currentThreadId) return;
+
+    client.POST("/{thread_id}/message", {
+      params: {
+        path: {
+          thread_id: currentThreadId,
+        },
+        query: {
+          message_text: message.text,
+          sender: message.sender,
+        },
+      },
     });
   };
 
-  const updateThreadTitle = (newTitle: string) => {
+  const updateTitleInThreads = ({
+    id,
+    newTitle,
+  }: {
+    id: string;
+    newTitle: string;
+  }) => {
     setThreads((prevThreads) => {
       return prevThreads.map((thread) => {
-        if (thread.id == currentThreadId) {
-          const truncatedTitle =
-            newTitle.length > 30 ? newTitle.substring(0, 30) + "..." : newTitle;
+        if (thread.id === id) {
           return {
             ...thread,
-            title: truncatedTitle,
+            title: newTitle,
           };
         }
         return thread;
@@ -113,18 +134,35 @@ const ChatPage: React.FC = () => {
 
       const currentThread = threads.find((t) => t.id == currentThreadId);
       const isFirstMessage =
-        currentThread && currentThread.messages.length === 0;
+        currentThread && currentThread.messages?.length === 0;
 
-      if (isFirstMessage) {
-        updateThreadTitle(message);
+      if (isFirstMessage && currentThreadId) {
+        client.PUT("/thread/{thread_id}/title", {
+          params: {
+            path: { thread_id: currentThreadId },
+            query: {
+              new_title:
+                message.length > 30
+                  ? message.substring(0, 30) + "..."
+                  : message,
+            },
+          },
+        });
+        updateTitleInThreads({
+          id: currentThreadId,
+          newTitle:
+            message.length > 30 ? message.substring(0, 30) + "..." : message,
+        });
       }
 
       const userMessage: ChatMessage = {
         id: Date.now().toString() + "-user",
+        thread_id: currentThreadId || "",
         text: message,
         sender: "user",
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
       };
+      console.log("currentThreadId:", currentThreadId);
       setMessagesInThread(userMessage);
       try {
         const requestBody: RagChatRequest = {
@@ -136,28 +174,29 @@ const ChatPage: React.FC = () => {
         const { data, error } = await client.POST("/chat", {
           body: requestBody,
         });
-        if (error || !data) {
-          console.error("API Error");
-          throw new Error(
-            `API call failed: ${JSON.stringify(error || "No data")}`
-          );
+        if (error) {
+          // サーバーからエラーが返ってきた場合 (500 Internal Server Error など)
+          console.error("API Error Response:", error);
+          const errorMessage: ChatMessage = {
+            id: Date.now().toString() + "-error",
+            thread_id: currentThreadId || "",
+            text: `エラーが発生しました: ${error.detail || "不明なエラー"}`,
+            sender: "bot",
+            timestamp: new Date().toISOString(),
+          };
+          setMessagesInThread(errorMessage);
+          return;
         }
         const botMessages: ChatMessage = {
           id: Date.now().toString() + "-bot",
-          text: data.response,
+          thread_id: currentThreadId || "",
+          text: data?.response || "回答を取得できませんでした。",
           sender: "bot",
-          timestamp: new Date(),
+          timestamp: new Date().toISOString(),
         };
         setMessagesInThread(botMessages);
-      } catch (error) {
-        console.error("Error during RAG API call:", error);
-        const errorMessage: ChatMessage = {
-          id: Date.now().toString() + "-error",
-          text: "エラーが発生しました。システム管理者にお問い合わせください",
-          sender: "bot",
-          timestamp: new Date(),
-        };
-        setMessagesInThread(errorMessage);
+      } catch (err) {
+        console.error("API呼び出し時にネットワークエラーが発生しました:", err);
       } finally {
         setIsSending(false);
       }
