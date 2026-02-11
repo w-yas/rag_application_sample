@@ -95,7 +95,9 @@ semantic_config = SemanticConfiguration(
     name="my-semantic-config",
     prioritized_fields=SemanticPrioritizedFields(  # 検索時に優先されるフィールド
         title_field=SemanticField(field_name="title"),
-        keywords_fields=[SemanticField(field_name="locations")],  # キーワード候補として使用するフィールド
+        keywords_fields=[
+            SemanticField(field_name="locations")
+        ],  # キーワード候補として使用するフィールド
         content_fields=[SemanticField(field_name="chunk")],
     ),
 )

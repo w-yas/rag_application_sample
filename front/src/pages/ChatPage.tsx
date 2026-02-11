@@ -106,6 +106,17 @@ const ChatPage: React.FC = () => {
         },
       },
     });
+    setThreads((prevThreads) => {
+      return prevThreads.map((thread) => {
+        if (thread.id === currentThreadId) {
+          return {
+            ...thread,
+            messages: [...(thread.messages || []), message],
+          };
+        }
+        return thread;
+      });
+    });
   };
 
   const updateTitleInThreads = ({

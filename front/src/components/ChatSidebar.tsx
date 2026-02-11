@@ -1,7 +1,7 @@
 import type React from "react";
 import * as ApiTypes from "../api/schema";
 import "../ChatPage.css";
-import type { ChatThread } from "../types/chat";
+import type { ChatThread } from "../pages/ChatPage";
 
 type SearchMode =
   ApiTypes.components["schemas"]["RagChatRequest"]["search_mode"];
@@ -79,7 +79,7 @@ const ChatSidebar: React.FC<ChatSidebarProps> = ({
         {threads.map((thread) => (
           <div
             key={thread.id}
-            onClick={() => onSelectTread(thread.id)}
+            onClick={() => onSelectTread(thread.id || "")}
             className={`thread-item${
               thread.id === currentThreadId ? " thread-item-active" : ""
             }`}

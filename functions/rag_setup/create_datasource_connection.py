@@ -2,7 +2,10 @@ import os
 
 from azure.core.credentials import AzureKeyCredential
 from azure.search.documents.indexes import SearchIndexerClient
-from azure.search.documents.indexes.models import SearchIndexerDataContainer, SearchIndexerDataSourceConnection
+from azure.search.documents.indexes.models import (
+    SearchIndexerDataContainer,
+    SearchIndexerDataSourceConnection,
+)
 from dotenv import load_dotenv
 
 
