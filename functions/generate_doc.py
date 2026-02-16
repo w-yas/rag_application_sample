@@ -4,6 +4,9 @@ import os
 import difflib
 from azure.storage.blob import BlobServiceClient
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def main():
     # 1. 最新のWhat's Newを取得

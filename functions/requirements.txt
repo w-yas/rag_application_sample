@@ -3,3 +3,8 @@
 # azure-monitor-opentelemetry 
 
 azure-functions
+requests
+azure-storage-blob
+azure-search-documents
+dotenv
+beautifulsoup4

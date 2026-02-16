@@ -36,6 +36,7 @@ index_name = "py-rag-tutorial-idx"
 # Create a skillset
 skillset_name = "py-rag-tutorial-ss"
 
+# 1. テキスト分割スキル
 split_skill = SplitSkill(
     description="Split skill to chunk documents",
     text_split_mode="pages",
@@ -48,6 +49,7 @@ split_skill = SplitSkill(
     outputs=[OutputFieldMappingEntry(name="textItems", target_name="pages")],
 )
 
+# 2. ベクトル化スキル
 embedding_skill = AzureOpenAIEmbeddingSkill(
     description="Skill to generate embeddings via Azure OpenAI",
     context="/document/pages/*",
@@ -55,33 +57,40 @@ embedding_skill = AzureOpenAIEmbeddingSkill(
     api_key=AZURE_OPENAI_KEY,
     deployment_name="text-embedding-ada-002",
     model_name="text-embedding-ada-002",
-    dimensions=1536,
     inputs=[
         InputFieldMappingEntry(name="text", source="/document/pages/*"),
     ],
     outputs=[OutputFieldMappingEntry(name="embedding", target_name="text_vector")],
 )
-
+# 3. エンティティ抽出スキル (Locationから変更)
 entity_skill = EntityRecognitionSkill(
-    description="Skill to recognize entities in text",
+    description="Skill to recognize models and products",
     context="/document/pages/*",
-    categories=["Location"],
+    # AOAIのモデル名は Product や Skill として認識されやすいため複数を指定
+    categories=["Organization", "Product", "Skill"],
     default_language_code="en",
     inputs=[InputFieldMappingEntry(name="text", source="/document/pages/*")],
-    outputs=[OutputFieldMappingEntry(name="locations", target_name="locations")],
+    # target_name を "extracted_entities" に設定（後で models フィールドへ送る）
+    outputs=[OutputFieldMappingEntry(name="entities", target_name="extracted_entities")],
 )
 
+# 4. インデックスへのマッピング設定
 index_projections = SearchIndexerIndexProjection(
     selectors=[
         SearchIndexerIndexProjectionSelector(
-            target_index_name=index_name,
+            target_index_name=index_name, # 先ほど作成した aoai-whatsnew-idx
             parent_key_field_name="parent_id",
             source_context="/document/pages/*",
             mappings=[
+                # インデックスのフィールド名 : スキルの出力パス
                 InputFieldMappingEntry(name="chunk", source="/document/pages/*"),
                 InputFieldMappingEntry(name="text_vector", source="/document/pages/*/text_vector"),
-                InputFieldMappingEntry(name="locations", source="/document/pages/*/locations"),
-                InputFieldMappingEntry(name="title", source="/document/metadata_storage_name"),
+                InputFieldMappingEntry(name="models", source="/document/pages/*/extracted_entities"),
+
+                # Blobメタデータから取得（メタデータは /document 直下にある）
+                InputFieldMappingEntry(name="source_file", source="/document/metadata_storage_name"),
+                InputFieldMappingEntry(name="content_type", source="/document/content_type"),
+                InputFieldMappingEntry(name="scraped_at", source="/document/scraped_at"),
             ],
         ),
     ],
@@ -89,7 +98,6 @@ index_projections = SearchIndexerIndexProjection(
         projection_mode=IndexProjectionMode.SKIP_INDEXING_PARENT_DOCUMENTS
     ),
 )
-
 cognitive_services_account = CognitiveServicesAccountKey(key=AZURE_AI_MULTISERVICE_KEY)
 
 skills = [split_skill, embedding_skill, entity_skill]

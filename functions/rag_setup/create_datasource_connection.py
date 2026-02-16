@@ -19,9 +19,9 @@ credential = AzureKeyCredential(AZURE_SEARCH_KEY)
 
 # データソースの作成
 indexer_client = SearchIndexerClient(endpoint=AZURE_SEARCH_SERVICE, credential=credential)
-container = SearchIndexerDataContainer(name="essa-ebooks-pdfs-all")
+container = SearchIndexerDataContainer(name="documents")
 data_source_connection = SearchIndexerDataSourceConnection(
-    name="py-rag-tutorial-ds",
+    name="py-rag-ds",
     type="azureblob",
     connection_string=AZURE_STORAGE_CONNECTION,
     container=container,
