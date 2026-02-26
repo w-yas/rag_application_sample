@@ -25,16 +25,16 @@ AZURE_AI_MULTISERVICE_KEY = os.getenv("AZURE_AI_MULTISERVICE_KEY")
 AZURE_OPENAI_ACCOUNT = os.getenv("AZURE_OPENAI_ACCOUNT")
 AZURE_OPENAI_KEY = os.getenv("AZURE_OPENAI_KEY")
 AZURE_SEARCH_SERVICE = os.getenv("AZURE_SEARCH_SERVICE")
-INDEX_NAME = "py-rag-tutorial-idx"
+INDEX_NAME = "py-rag-idx"
 
 cog_cred = AzureKeyCredential(AZURE_AI_MULTISERVICE_KEY)
 search_cred = AzureKeyCredential(os.getenv("AZURE_SEARCH_KEY"))
 
 # Index name
-index_name = "py-rag-tutorial-idx"
+index_name = "py-rag-idx"
 
 # Create a skillset
-skillset_name = "py-rag-tutorial-ss"
+skillset_name = "py-rag-ss"
 
 # 1. テキスト分割スキル
 split_skill = SplitSkill(
@@ -78,7 +78,7 @@ entity_skill = EntityRecognitionSkill(
 index_projections = SearchIndexerIndexProjection(
     selectors=[
         SearchIndexerIndexProjectionSelector(
-            target_index_name=index_name, # 先ほど作成した aoai-whatsnew-idx
+            target_index_name=index_name,
             parent_key_field_name="parent_id",
             source_context="/document/pages/*",
             mappings=[

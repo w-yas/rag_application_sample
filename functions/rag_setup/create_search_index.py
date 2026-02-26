@@ -35,10 +35,9 @@ AZURE_OPENAI_ACCOUNT = os.getenv("AZURE_OPENAI_ACCOUNT")
 credential = AzureKeyCredential(os.getenv("AZURE_SEARCH_KEY"))
 
 # Create a search index
-index_name = "py-rag-tutorial-idx"
+index_name = "py-rag-idx"
 index_client = SearchIndexClient(endpoint=AZURE_SEARCH_SERVICE, credential=credential)
 fields = [
-
     SearchField(name="parent_id", type=SearchFieldDataType.String, filterable=True),
     SearchField(
         name="chunk_id",
